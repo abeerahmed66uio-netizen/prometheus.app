@@ -29,11 +29,9 @@ export default function Home() {
   const [showMagazineModal, setShowMagazineModal] = useState(false);
   const [showLoginMenu, setShowLoginMenu] = useState(false);
   
-  // حالة لتخزين الكاتب الذي يتم عرض بروفايله حالياً عند النقر على اسمه
   const [selectedWriter, setSelectedWriter] = useState<TeamMember | null>(null);
 
   useEffect(() => {
-    // جلب الأعضاء المخزنين
     const savedMembers = localStorage.getItem('prometheus_team_members');
     if (savedMembers) {
       try {
@@ -41,7 +39,6 @@ export default function Home() {
       } catch (e) {}
     }
 
-    // جلب المقالات المنشورة في المجلة الرسمية
     const savedArticles = localStorage.getItem('prometheus_published_articles');
     if (savedArticles) {
       try {
@@ -53,7 +50,7 @@ export default function Home() {
   return (
     <main dir="rtl" className="min-h-screen bg-[#070b19] text-white p-6 md:p-10 font-sans flex flex-col justify-between">
       
-      {/* شريط التنقل العلوي */}
+      {/* شريط التنقل العلوي - نفس الشكل تماماً بدون عن الفريق والأعضاء */}
       <nav className="max-w-6xl mx-auto w-full flex justify-between items-center border-b border-blue-950 pb-4 relative">
         <div className="flex items-center gap-2">
           <span className="text-xl font-bold">PROMETHEUS</span>
@@ -62,8 +59,6 @@ export default function Home() {
         
         <div className="flex gap-6 text-sm items-center">
           <Link href="/" className="text-amber-400 font-bold">الرئيسية</Link>
-          <Link href="/team" className="text-gray-300 hover:text-white">عن الفريق</Link>
-          <Link href="/team" className="text-gray-300 hover:text-white">الأعضاء</Link>
           
           {/* زر تسجيل الدخول الموحد */}
           <div className="relative">
@@ -86,7 +81,7 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* المحتوى الرئيسي */}
+      {/* المحتوى الرئيسي - نفس الدزاين والتوزيع الأصلي */}
       <div className="max-w-6xl mx-auto w-full flex flex-col gap-8 my-8">
         
         <div className="text-center py-10 flex flex-col items-center gap-4">
@@ -100,7 +95,6 @@ export default function Home() {
             مبادرة شبابية تهدف لردم الفجوة بين التعليم الأكاديمي ومتطلبات الواقع عبر تعزيز المهارات والتعليم المستمر.
           </p>
         </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           
           <div className="bg-[#0e1630] border border-blue-900/40 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
@@ -186,7 +180,6 @@ export default function Home() {
                     <h3 className="text-base font-bold text-white">{art.title}</h3>
                     <p className="text-xs text-gray-300 leading-relaxed whitespace-pre-wrap">{art.content}</p>
                     
-                    {/* اسم الكاتب قابل للنقر لفتح بروفايله ومقالاته المنشورة */}
                     <div 
                       onClick={() => {
                         const matchedMember = members.find(m => m.name.trim() === art.author.trim());
@@ -235,7 +228,7 @@ export default function Home() {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {members.length === 0 ? (
                 <p className="text-xs text-gray-400 col-span-full text-center py-8">لم يتم إضافة أي عضو حتى الآن.</p>
-              ) : (
+          ) : (
                 members.map(member => (
                   <div 
                     key={member.id} 
@@ -262,7 +255,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* نافذة بروفايل الكاتب المحددة */}
+      {/* نافذة بروفايل الكاتب */}
       {selectedWriter && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex justify-center items-center p-4">
           <div className="bg-[#0e1630] border border-amber-500/50 rounded-2xl max-w-xl w-full max-h-[85vh] overflow-y-auto p-6 shadow-2xl flex flex-col gap-6 relative">
@@ -274,7 +267,6 @@ export default function Home() {
               إغلاق ✕
             </button>
 
-            {/* معلومات الكاتب الشخصية */}
             <div className="flex flex-col items-center text-center gap-3 pt-2">
               <img src={selectedWriter.image} alt={selectedWriter.name} className="w-24 h-24 rounded-full object-cover border-2 border-amber-500 shadow-xl" />
               <div>
@@ -291,7 +283,6 @@ export default function Home() {
               </span>
             </div>
 
-            {/* مقالات الكاتب المنشورة */}
             <div className="border-t border-blue-950 pt-4 flex flex-col gap-3">
               <h4 className="text-sm font-bold text-amber-400">مقالات الكاتب المنشورة في المجلة 📝:</h4>
               
@@ -317,7 +308,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* التذييل (Footer) */}
+      {/* التذييل */}
       <footer className="max-w-6xl mx-auto w-full text-center text-xs text-gray-500 border-t border-blue-950 pt-6 mt-12">
         <p>© {new Date().getFullYear()} مبادرة بروميثوس. جميع الحقوق محفوظة.</p>
       </footer>
