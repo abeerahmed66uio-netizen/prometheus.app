@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -15,11 +16,30 @@ interface Article {
   date?: string;
 }
 
+interface TeamMember {
+  id: number;
+  name: string;
+  role: string;
+}
+
+interface UserRequest {
+  id: number;
+  name: string;
+  role: 'كاتب' | 'محرر';
+  bio?: string;
+  date: string;
+}
+
 export default function EditorDashboard() {
-  // حماية بكلمة مرور لرئيس التحرير
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [editorNameInput, setEditorNameInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
+
+  // حالات تقديم طلب انضمام جديد كمحرر
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [regName, setRegName] = useState('');
+  const [regBio, setRegBio] = useState('');
+  const [requestSent, setRequestSent] = useState(false);
 
   const [articles, setArticles] = useState<Article[]>([]);
   const [bookTitle, setBookTitle] = useState('');
@@ -28,38 +48,89 @@ export default function EditorDashboard() {
   const [feedbackInput, setFeedbackInput] = useState<{ [key: number]: string }>({});
   const [activeFeedbackId, setActiveFeedbackId] = useState<number | null>(null);
 
+  // 1. جلب المقالات واسترجاع الجلسة المحفوظة تلقائياً عند الفتح
   useEffect(() => {
     const saved = localStorage.getItem('prometheus_articles');
     if (saved) {
       try {
-        const parsed = JSON.parse(saved);
-        setArticles(parsed);
+        setArticles(JSON.parse(saved));
       } catch (e) {}
+    }
+
+    // استرجاع جلسة دخول المحرر السابقة إن وجدت
+    const savedEditorSession = localStorage.getItem('prometheus_active_editor');
+    if (savedEditorSession) {
+      setEditorNameInput(savedEditorSession);
+      setIsAuthenticated(true);
     }
   }, []);
 
-  // تسجيل الدخول بالاسم الصريح وكلمة المرور التي حددها الأدمن
+  // 2. تسجيل الدخول مع التحقق من موافقة الأدمن وحفظ الجلسة
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     const savedAdminPassword = localStorage.getItem('prometheus_admin_password') || 'admin123';
+    const approvedMembers: TeamMember[] = JSON.parse(localStorage.getItem('prometheus_team_members') || '[]');
 
-    if (!editorNameInput.trim()) {
+    const cleanEditorName = editorNameInput.trim().toLowerCase();
+
+    if (!cleanEditorName) {
       alert('يرجى إدخال الاسم الصريح!');
       return;
     }
 
-    if (passwordInput === savedAdminPassword) {
-      setIsAuthenticated(true);
-    } else {
+    if (passwordInput !== savedAdminPassword) {
       alert('كلمة المرور غير صحيحة! يرجى مراجعة الأدمن.');
+      return;
     }
+
+    // التحقق من موافقة الأدمن من قائمة الأعضاء المقبولين
+    const isApproved = approvedMembers.some(
+      m => m.name.trim().toLowerCase() === cleanEditorName
+    );
+
+    if (!isApproved) {
+      alert('اسمك غير مسجل في قائمة المحررين المقبولين لدى الأدمن! يرجى تقديم طلب انضمام أولاً أو انتظار موافقة الأدمن.');
+      return;
+    }
+
+    setIsAuthenticated(true);
+    localStorage.setItem('prometheus_active_editor', editorNameInput.trim());
+  };
+
+  // 3. تقديم طلب انضمام جديد للأدمن
+  const handleSendRequest = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!regName.trim()) return;
+
+    const newRequest: UserRequest = {
+      id: Date.now(),
+      name: regName.trim(),
+      role: 'محرر',
+      bio: regBio,
+      date: new Date().toLocaleDateString('ar-EG'),
+    };
+
+    const existingRequests: UserRequest[] = JSON.parse(localStorage.getItem('prometheus_pending_requests') || '[]');
+    localStorage.setItem('prometheus_pending_requests', JSON.stringify([newRequest, ...existingRequests]));
+
+    setEditorNameInput(regName.trim());
+    setRequestSent(true);
+    setRegName('');
+    setRegBio('');
+  };
+
+  // تسجيل الخروج
+  const handleLogout = () => {
+    localStorage.removeItem('prometheus_active_editor');
+    setIsAuthenticated(false);
+    setEditorNameInput('');
+    setPasswordInput('');
   };
 
   const updateArticlesState = (updated: Article[]) => {
     setArticles(updated);
     localStorage.setItem('prometheus_articles', JSON.stringify(updated));
 
-    // تصفية وتجهيز المقالات المنشورة لتتطابق تماماً مع ما تقرأه الصفحة الرئيسية
     const publishedOnly = updated
       .filter(art => art.status === 'published')
       .map(art => ({
@@ -106,37 +177,96 @@ export default function EditorDashboard() {
     }, 3000);
   };
 
-  // شاشة إدخال الاسم وكلمة المرور
+  // شاشة إدخال الاسم وكلمة المرور / تقديم الطلب
   if (!isAuthenticated) {
     return (
       <main dir="rtl" className="min-h-screen bg-[#070b19] text-white flex items-center justify-center p-6 font-sans">
         <div className="bg-[#0e1630] border border-blue-900/60 rounded-2xl max-w-md w-full p-8 shadow-2xl flex flex-col gap-6 text-center">
-          <div>
-            <h1 className="text-xl font-bold text-amber-400 mb-2">تسجيل دخول رئيس التحرير 📝</h1>
-            <p className="text-xs text-gray-400">يرجى كتابة اسمك الصريح وكلمة المرور الخاصة باللوحة.</p>
-          </div>
-          <form onSubmit={handleLogin} className="flex flex-col gap-4">
-            <input 
-              type="text" 
-              placeholder="اسم المحرر الصريح..." 
-              value={editorNameInput} 
-              onChange={(e) => setEditorNameInput(e.target.value)} 
-              required 
-              className="px-4 py-3 rounded-xl bg-slate-950 border border-blue-950 text-sm text-white focus:outline-none text-center"
-            />
-            <input 
-              type="password" 
-              placeholder="كلمة المرور..." 
-              value={passwordInput} 
-              onChange={(e) => setPasswordInput(e.target.value)} 
-              required 
-              className="px-4 py-3 rounded-xl bg-slate-950 border border-blue-950 text-sm text-white focus:outline-none text-center"
-            />
-            <button type="submit" className="py-3 bg-amber-500 hover:bg-amber-400 font-bold text-sm rounded-xl text-slate-950 cursor-pointer transition-all">
-              دخول 🔓
-            </button>
-          </form>
-          <Link href="/" className="text-xs text-gray-400 hover:underline">العودة إلى الصفحة الرئيسية 🏠</Link>
+          
+          {requestSent ? (
+            <div className="flex flex-col gap-4">
+              <span className="text-4xl">⏳</span>
+              <h1 className="text-lg font-bold text-amber-400">تم إرسال طلبك بنجاح!</h1>
+              <p className="text-xs text-gray-300">
+                طلب الانضمام كمحرر أُرسل إلى الأدمن. بعد موافقة الأدمن، أدخل اسمك (<span className="text-amber-400 font-bold">{editorNameInput}</span>) وكلمة المرور للدخول مباشرة.
+              </p>
+              <button 
+                onClick={() => { setRequestSent(false); setIsRegistering(false); }}
+                className="mt-2 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-bold cursor-pointer transition-all"
+              >
+                الانتقال لتسجيل الدخول 🔑
+              </button>
+            </div>
+          ) : isRegistering ? (
+            /* نموذج تقديم طلب انضمام جديد */
+            <form onSubmit={handleSendRequest} className="flex flex-col gap-4">
+              <div>
+                <h1 className="text-xl font-bold text-amber-400 mb-1">تقديم طلب انضمام كمحرر 📝</h1>
+                <p className="text-xs text-gray-400">أدخل اسمك وسيتم توجيه الطلب إلى لوحة الأدمن للموافقة عليه.</p>
+              </div>
+              <input 
+                type="text" 
+                placeholder="اسمك الثلاثي الصريح..." 
+                value={regName} 
+                onChange={(e) => setRegName(e.target.value)} 
+                required 
+                className="px-4 py-3 rounded-xl bg-slate-950 border border-blue-950 text-sm text-white focus:outline-none text-center"
+              />
+              <textarea 
+                placeholder="نبذة عن خبرتك بالتحرير والتدقيق..." 
+                value={regBio} 
+                onChange={(e) => setRegBio(e.target.value)} 
+                rows={3}
+                className="px-4 py-3 rounded-xl bg-slate-950 border border-blue-950 text-xs text-white focus:outline-none resize-none"
+              />
+              <button type="submit" className="py-3 bg-amber-500 hover:bg-amber-400 font-bold text-sm rounded-xl text-slate-950 cursor-pointer transition-all">
+                إرسال الطلب للأدمن 🚀
+              </button>
+              <button 
+                type="button" 
+                onClick={() => setIsRegistering(false)} 
+                className="text-xs text-gray-400 hover:text-white cursor-pointer"
+              >
+                تمت الموافقة على طلبك؟ تسجيل الدخول
+              </button>
+            </form>
+          ) : (
+            /* نموذج تسجيل الدخول */
+            <form onSubmit={handleLogin} className="flex flex-col gap-4">
+              <div>
+                <h1 className="text-xl font-bold text-amber-400 mb-1">تسجيل دخول رئيس التحرير 📝</h1>
+                <p className="text-xs text-gray-400">يرجى كتابة اسمك الصريح المعتمد وكلمة المرور الخاصة باللوحة.</p>
+              </div>
+              <input 
+                type="text" 
+                placeholder="اسم المحرر الصريح..." 
+                value={editorNameInput} 
+                onChange={(e) => setEditorNameInput(e.target.value)} 
+                required 
+                className="px-4 py-3 rounded-xl bg-slate-950 border border-blue-950 text-sm text-white focus:outline-none text-center"
+              />
+              <input 
+                type="password" 
+                placeholder="كلمة المرور..." 
+                value={passwordInput} 
+                onChange={(e) => setPasswordInput(e.target.value)} 
+                required 
+                className="px-4 py-3 rounded-xl bg-slate-950 border border-blue-950 text-sm text-white focus:outline-none text-center"
+              />
+              <button type="submit" className="py-3 bg-amber-500 hover:bg-amber-400 font-bold text-sm rounded-xl text-slate-950 cursor-pointer transition-all">
+                دخول 🔓
+              </button>
+              <button 
+                type="button" 
+                onClick={() => setIsRegistering(true)} 
+                className="text-xs text-amber-400 hover:underline mt-1 cursor-pointer"
+              >
+                محرر جديد؟ تقديم طلب انضمام للأدمن ➕
+              </button>
+            </form>
+          )}
+
+          <Link href="/" className="text-xs text-gray-400 hover:underline pt-2 border-t border-blue-950">العودة إلى الصفحة الرئيسية 🏠</Link>
         </div>
       </main>
     );
@@ -155,9 +285,14 @@ export default function EditorDashboard() {
             أهلاً بك، {editorNameInput} 📝
           </span>
         </div>
-        <Link href="/" className="text-xs text-rose-400 hover:underline">
-          الرئيسية 🏠
-        </Link>
+        <div className="flex items-center gap-4">
+          <button onClick={handleLogout} className="text-xs text-rose-400 hover:underline cursor-pointer">
+            تسجيل خروج 🔒
+          </button>
+          <Link href="/" className="text-xs text-gray-300 hover:underline">
+            الرئيسية 🏠
+          </Link>
+        </div>
       </nav>
 
       {/* قسم المراجعات والرفع */}
