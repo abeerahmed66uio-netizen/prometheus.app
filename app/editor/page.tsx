@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -16,7 +15,7 @@ interface Article {
   date?: string;
 }
 
-interface TeamMember {
+interface ApprovedLogin {
   id: number;
   name: string;
   role: string;
@@ -52,7 +51,7 @@ export default function EditorDashboard() {
       } catch (e) {}
     }
 
-    // استرجاع جلسة المحرر المحفوظة سابقاً عند العودة للموقع
+    // استرجاع جلسة المحرر المحفوظة سابقاً
     const savedEditor = localStorage.getItem('prometheus_active_editor');
     if (savedEditor) {
       setEditorNameInput(savedEditor);
@@ -60,10 +59,14 @@ export default function EditorDashboard() {
     }
   }, []);
 
-  // فحص الاسم وإتاحة الدخول للمقبولين
+  // 🔴 تصحيح الفحص: قراءة أسماء المقبولين من prometheus_approved_logins
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    const approvedMembers: TeamMember[] = JSON.parse(localStorage.getItem('prometheus_team_members') || '[]');
+
+    const approvedLogins: ApprovedLogin[] = JSON.parse(
+      localStorage.getItem('prometheus_approved_logins') || '[]'
+    );
+    
     const cleanName = editorNameInput.trim().toLowerCase();
 
     if (!cleanName) {
@@ -71,9 +74,9 @@ export default function EditorDashboard() {
       return;
     }
 
-    // التحقق هل وافق الأدمن على هذا الاسم بصفة محرر أو أدمن
-    const isApproved = approvedMembers.some(
-      m => m.name.trim().toLowerCase() === cleanName && (m.role === 'محرر' || m.role === 'أدمن' || m.role === 'رئيس تحرير')
+    // مطابقة الاسم مع قائمة المفعّلين لدى الأدمن (سواء محرر أو أدمن)
+    const isApproved = approvedLogins.some(
+      u => u.name.trim().toLowerCase() === cleanName && (u.role === 'محرر' || u.role === 'أدمن' || u.role === 'رئيس تحرير')
     );
 
     if (isApproved) {
@@ -96,7 +99,9 @@ export default function EditorDashboard() {
       date: new Date().toLocaleDateString('ar-EG'),
     };
 
-    const pending: PendingRequest[] = JSON.parse(localStorage.getItem('prometheus_pending_requests') || '[]');
+    const pending: PendingRequest[] = JSON.parse(
+      localStorage.getItem('prometheus_pending_requests') || '[]'
+    );
     localStorage.setItem('prometheus_pending_requests', JSON.stringify([newRequest, ...pending]));
 
     setEditorNameInput(regName.trim());
@@ -123,7 +128,7 @@ export default function EditorDashboard() {
         author: art.writer || art.author || 'كاتب بروميثوس',
         category: art.category,
         content: art.content,
-        date: art.date || '2026/08/06'
+        date: art.date || '2026/08/07'
       }));
     
     localStorage.setItem('prometheus_published_articles', JSON.stringify(publishedOnly));
@@ -172,7 +177,7 @@ export default function EditorDashboard() {
               <span className="text-4xl">⏳</span>
               <h1 className="text-lg font-bold text-amber-400">تم إرسال طلبك بنجاح!</h1>
               <p className="text-xs text-gray-300">
-                طلبك كمحرر بانتظار موافقة الأدمن. بمجرد الموافقة، فقط ادخل واكتب اسمك (<span className="text-amber-400 font-bold">{editorNameInput}</span>) وسيقوم السيستم بفتح اللوحة لك فوراً!
+                طلبك كمحرر بانتظار موافقة الأدمن. بمجرد الموافقة، ادخل واكتب اسمك (<span className="text-amber-400 font-bold">{editorNameInput}</span>) وسيفتح السيستم لك فوراً!
               </p>
               <button 
                 onClick={() => { setRequestSent(false); setIsRegistering(false); }}
