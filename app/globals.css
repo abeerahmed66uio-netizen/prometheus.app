@@ -1,26 +1,35 @@
-@import "tailwindcss";
+/* استدعاء 30 خطاً مشهوراً (15 عربياً + 15 إنكليزي) */
+@import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@400;700;900&family=Almarai:wght@400;700;800&family=Amiri:ital,wght@0,400;0,700;1,400&family=Aref+Ruqaa:wght@400;700&family=Cairo:wght@400;700;900&family=Changa:wght@400;700;800&family=El+Messiri:wght@400;700&family=Harmattan:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@400;700&family=Kufam:ital,wght@0,400;0,700;1,400&family=Lalezar&family=Lateef:wght@400;700&family=Lemonada:wght@400;700&family=Marhey:wght@400;700&family=Noto+Kufi+Arabic:wght@400;700;900&family=Cinzel:wght@400;700;900&family=Fira+Code:wght@400;700&family=Inter:wght@400;700;900&family=Lato:wght@400;700;900&family=Lora:ital,wght@0,400;0,700;1,400&family=Merriweather:wght@400;700;900&family=Montserrat:wght@400;700;900&family=Oswald:wght@400;700&family=Pacifico&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Poppins:wght@400;700;900&family=Roboto:wght@400;700;900&family=Space+Grotesk:wght@400;700&family=Syne:wght@400;700;800&family=Tajawal:wght@400;700;900&display=swap');
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* --- الخطوط العربية (15 خطاً) --- */
+.font-tajawal { font-family: 'Tajawal', sans-serif; }
+.font-cairo { font-family: 'Cairo', sans-serif; }
+.font-almarai { font-family: 'Almarai', sans-serif; }
+.font-alexandria { font-family: 'Alexandria', sans-serif; }
+.font-ibm-arabic { font-family: 'IBM Plex Sans Arabic', sans-serif; }
+.font-noto { font-family: 'Noto Kufi Arabic', sans-serif; }
+.font-changa { font-family: 'Changa', sans-serif; }
+.font-amiri { font-family: 'Amiri', serif; }
+.font-aref { font-family: 'Aref Ruqaa', serif; }
+.font-el-messiri { font-family: 'El Messiri', sans-serif; }
+.font-marhey { font-family: 'Marhey', cursive; }
+.font-lalezar { font-family: 'Lalezar', cursive; }
+.font-lemonada { font-family: 'Lemonada', cursive; }
+.font-kufam { font-family: 'Kufam', cursive; }
+.font-lateef { font-family: 'Lateef', cursive; }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
+/* --- الخطوط الإنكليزية (15 خطاً) --- */
+.font-inter { font-family: 'Inter', sans-serif; }
+.font-roboto { font-family: 'Roboto', sans-serif; }
+.font-poppins { font-family: 'Poppins', sans-serif; }
+.font-montserrat { font-family: 'Montserrat', sans-serif; }
+.font-lato { font-family: 'Lato', sans-serif; }
+.font-oswald { font-family: 'Oswald', sans-serif; }
+.font-playfair { font-family: 'Playfair Display', serif; }
+.font-merriweather { font-family: 'Merriweather', serif; }
+.font-lora { font-family: 'Lora', serif; }
+.font-cinzel { font-family: 'Cinzel', serif; }
+.font-space { font-family: 'Space Grotesk', sans-serif; }
+.font-syne { font-family: 'Syne', sans-serif; }
+.font-fira { font-family: 'Fira Code', monospace; }
+.font-pacifico { font-family: 'Pacifico', cursive; }
