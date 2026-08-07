@@ -1,0 +1,10 @@
+{
+  "name": "منصة بروميثوس",
+  "short_name": "بروميثوس",
+  "description": "منصة بروميثوس التعليمية والشبابية",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070b19",
+  "theme_color": "#070b19",
+  "icons": []
+}
