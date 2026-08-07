@@ -27,8 +27,11 @@ export default function Home() {
   const [showMagazineModal, setShowMagazineModal] = useState(false);
   const [showLoginMenu, setShowLoginMenu] = useState(false);
   const [selectedWriter, setSelectedWriter] = useState<TeamMember | null>(null);
+  const [currentYear, setCurrentYear] = useState<number | null>(null);
 
   useEffect(() => {
+    setCurrentYear(new Date().getFullYear());
+
     const savedMembers = localStorage.getItem('prometheus_team_members');
     if (savedMembers) {
       try {
@@ -59,7 +62,7 @@ export default function Home() {
           <Link href="/team" className="text-gray-300 hover:text-white text-xs sm:text-sm">عن الفريق</Link>
           <Link href="/team" className="text-gray-300 hover:text-white text-xs sm:text-sm">الأعضاء</Link>
           
-          {/* زر الـ 3 شخطات (بديل تسجيل الدخول) */}
+          {/* قائمة الخيارات / الدخول */}
           <div className="relative">
             <button 
               onClick={() => setShowLoginMenu(!showLoginMenu)}
@@ -81,6 +84,8 @@ export default function Home() {
           </div>
         </div>
       </nav>
+
+      {/* المحتوى الرئيسي */}
       <div className="max-w-6xl mx-auto w-full flex flex-col gap-8 my-8">
         
         <div className="text-center py-6 sm:py-10 flex flex-col items-center gap-4">
@@ -139,8 +144,8 @@ export default function Home() {
             >
               <div>
                 <h2 className="text-lg sm:text-xl font-bold mb-2 text-white group-hover:text-amber-400 transition-colors">بروفايلات الأعضاء 👥</h2>
-                <p className="text-xs sm:text-sm text-gray-300">استكشف نخبة الأعضاء ومتطوعين: أدوارهم، إنجازاتهم وساعات تطوعهم بداخل فريق بروميثوس.</p
-                                                                                                                </div>
+                <p className="text-xs sm:text-sm text-gray-300">استكشف نخبة الأعضاء ومتطوعين: أدوارهم، إنجازاتهم وساعات تطوعهم بداخل فريق بروميثوس.</p>
+              </div>
               <div className="mt-4 flex items-center justify-between text-xs sm:text-sm text-amber-400 font-bold">
                 <span>انقر لعرض كروت الأعضاء ({members.length})</span>
                 <span>←</span>
@@ -213,12 +218,11 @@ export default function Home() {
       {/* نافذة الأعضاء العامة */}
       {showMembersModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex justify-center items-center p-4">
-          
-<div className="bg-[#0e1630] border border-blue-900 rounded-2xl max-w-4xl w-full max-h-[85vh] overflow-y-auto p-4 sm:p-6 shadow-2xl flex flex-col gap-6">
+          <div className="bg-[#0e1630] border border-blue-900 rounded-2xl max-w-4xl w-full max-h-[85vh] overflow-y-auto p-4 sm:p-6 shadow-2xl flex flex-col gap-6">
             
             <div className="flex justify-between items-center border-b border-blue-950 pb-4">
               <div>
-                <h2 className="text-lg sm:text-xl font-bold text-amber-400">كروت الأعضاء والمتطوعين 🌟</h2>
+                <h2 className="text-lg sm:text-xl font-bold text-amber-400">كروت الأعضاء ومتطوعين 🌟</h2>
                 <p className="text-xs sm:text-sm text-gray-400">استعراض كافة الأعضاء المسجلين في المنصة.</p>
               </div>
               <button onClick={() => setShowMembersModal(false)} className="px-3 py-1.5 bg-rose-950 text-rose-300 rounded-xl text-xs sm:text-sm border border-rose-900 cursor-pointer">
@@ -283,6 +287,7 @@ export default function Home() {
                 ⏱️ {selectedWriter.volunteerHours} ساعة تطوع داخل الفريق
               </span>
             </div>
+
             <div className="border-t border-blue-950 pt-4 flex flex-col gap-3">
               <h4 className="text-sm sm:text-base font-bold text-amber-400">مقالات الكاتب المنشورة في المجلة 📝:</h4>
               
@@ -310,10 +315,9 @@ export default function Home() {
 
       {/* التذييل (Footer) */}
       <footer className="max-w-6xl mx-auto w-full text-center text-xs sm:text-sm text-gray-500 border-t border-blue-950 pt-6 mt-12">
-        <p>© {new Date().getFullYear()} مبادرة بروميثوس. جميع الحقوق محفوظة.</p>
+        <p>© {currentYear ?? ''} مبادرة بروميثوس. جميع الحقوق محفوظة.</p>
       </footer>
 
     </main>
   );
 }
-      {/* المحتوى الرئيسي */}
