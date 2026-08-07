@@ -1,5 +1,4 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
@@ -12,6 +11,16 @@ interface TeamMember {
   bio?: string;
 }
 
+interface UserRequest {
+  id: number;
+  name: string;
+  role: 'كاتب' | 'محرر';
+  email?: string;
+  bio?: string;
+  image?: string;
+  date: string;
+}
+
 export default function AdminDashboard() {
   // حالات المصادقة وكلمة المرور
   const [adminPassword, setAdminPassword] = useState<string | null>(null);
@@ -21,15 +30,18 @@ export default function AdminDashboard() {
   const [passwordError, setPasswordError] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-  // حالات إدارة الأعضاء
+  // حالات إدارة الأعضاء والطلبات
   const [members, setMembers] = useState<TeamMember[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<UserRequest[]>([]);
+  
+  // نموذج إضافة عضو جديد يدويًا
   const [name, setName] = useState('');
   const [role, setRole] = useState('');
   const [image, setImage] = useState('');
   const [volunteerHours, setVolunteerHours] = useState('');
   const [bio, setBio] = useState('');
 
-  // استرجاع البيانات المسبقة عند فتح الصفحة
+  // استرجاع البيانات عند فتح الصفحة
   useEffect(() => {
     const savedPassword = localStorage.getItem('prometheus_admin_password');
     if (savedPassword) {
@@ -40,6 +52,14 @@ export default function AdminDashboard() {
     if (savedMembers) {
       try {
         setMembers(JSON.parse(savedMembers));
+      } catch (e) {}
+    }
+
+    // جلب الطلبات المعلقة المقدمة من الكُتاب أو المحررين
+    const savedRequests = localStorage.getItem('prometheus_pending_requests');
+    if (savedRequests) {
+      try {
+        setPendingRequests(JSON.parse(savedRequests));
       } catch (e) {}
     }
   }, []);
@@ -66,7 +86,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // تغيير كلمة المرور من داخل اللوحة
+  // تغيير كلمة المرور
   const handleChangePassword = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPasswordInput) return;
@@ -77,7 +97,7 @@ export default function AdminDashboard() {
     alert('تم تغيير كلمة المرور بنجاح! 🔑');
   };
 
-  // رفع الصورة وتحويلها إلى Base64
+  // رفع الصورة تحويل Base64
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -90,12 +110,46 @@ export default function AdminDashboard() {
   };
 
   // حفظ الأعضاء في LocalStorage
-  const saveToLocalStorage = (updatedMembers: TeamMember[]) => {
+  const saveMembersToLocalStorage = (updatedMembers: TeamMember[]) => {
     setMembers(updatedMembers);
     localStorage.setItem('prometheus_team_members', JSON.stringify(updatedMembers));
   };
 
-  // إضافة عضو جديد
+  // حفظ الطلبات في LocalStorage
+  const saveRequestsToLocalStorage = (updatedRequests: UserRequest[]) => {
+    setPendingRequests(updatedRequests);
+    localStorage.setItem('prometheus_pending_requests', JSON.stringify(updatedRequests));
+  };
+
+  // موافقة الأدمن على طلب انضمام (كاتب / محرر)
+  const handleApproveRequest = (request: UserRequest) => {
+    const newMember: TeamMember = {
+      id: Date.now(),
+      name: request.name,
+      role: request.role === 'كاتب' ? 'كاتب محتوى' : 'محرر ومراجع',
+      image: request.image || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500',
+      volunteerHours: 0,
+      bio: request.bio || 'عضو معتمد في الفريق.',
+    };
+
+    // إضافة العضو للأعضاء المعتمدين
+    const updatedMembers = [newMember, ...members];
+    saveMembersToLocalStorage(updatedMembers);
+
+    // حذف الطلب من قائمة المعلقات
+    const updatedRequests = pendingRequests.filter(r => r.id !== request.id);
+    saveRequestsToLocalStorage(updatedRequests);
+
+    alert(`تمت الموافقة على طلب ${request.name} وإضافته للأعضاء بنجاح! 🎉`);
+  };
+
+  // رفض طلب الانضمام
+  const handleRejectRequest = (id: number) => {
+    const updatedRequests = pendingRequests.filter(r => r.id !== id);
+    saveRequestsToLocalStorage(updatedRequests);
+  };
+
+  // إضافة عضو يدويًا من قبل الأدمن
   const handleAddMember = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !role) return;
@@ -110,7 +164,7 @@ export default function AdminDashboard() {
     };
 
     const updated = [newMember, ...members];
-    saveToLocalStorage(updated);
+    saveMembersToLocalStorage(updated);
 
     setName('');
     setRole('');
@@ -123,10 +177,10 @@ export default function AdminDashboard() {
   // حذف عضو
   const handleDeleteMember = (id: number) => {
     const updated = members.filter(m => m.id !== id);
-    saveToLocalStorage(updated);
+    saveMembersToLocalStorage(updated);
   };
 
-  // الحالة 1: إذا لم يتم تعيين كلمة مرور من قبل
+  // الحالة 1: إعداد كلمة المرور لأول مرة
   if (!adminPassword) {
     return (
       <main dir="rtl" className="min-h-screen bg-[#070b19] text-white flex items-center justify-center p-6 font-sans">
@@ -168,7 +222,7 @@ export default function AdminDashboard() {
     );
   }
 
-  // الحالة 2: إذا تم تعيين كلمة مرور ولكن لم يتم تسجيل الدخول بعد
+  // الحالة 2: تسجيل الدخول
   if (!isAuthenticated) {
     return (
       <main dir="rtl" className="min-h-screen bg-[#070b19] text-white flex items-center justify-center p-6 font-sans">
@@ -213,7 +267,7 @@ export default function AdminDashboard() {
     );
   }
 
-  // الحالة 3: لوحة التحكم الكاملة بعد تسجيل الدخول بنجاح
+  // الحالة 3: لوحة التحكم المكتملة
   return (
     <main dir="rtl" className="min-h-screen bg-[#070b19] text-white p-6 md:p-10 font-sans">
       
@@ -267,9 +321,69 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* نموذج إضافة عضو جديد */}
+        {/* قسم الطلبات المعلقة (الموافقة والرفض) */}
+        <div className="bg-[#0e1630] border border-amber-500/40 rounded-2xl p-6 shadow-xl">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-bold text-amber-400 flex items-center gap-2">
+              <span>طلبات التسجيل المعلقة</span>
+              <span className="bg-amber-500/20 text-amber-400 text-xs px-2.5 py-0.5 rounded-full border border-amber-500/40">
+                {pendingRequests.length}
+              </span>
+            </h2>
+            <span className="text-xs text-gray-400">طلبات الكُتاب والمحررين بانتظار موافقتك</span>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            {pendingRequests.length === 0 ? (
+              <p className="text-xs text-gray-400 text-center py-6 bg-slate-950/40 rounded-xl border border-blue-950">
+                لا توجد طلبت تسجیل معلقة حالیاً.
+              </p>
+            ) : (
+              pendingRequests.map(req => (
+                <div key={req.id} className="bg-slate-950/80 border border-blue-900/60 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div className="flex items-center gap-3">
+                    <img 
+                      src={req.image || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500'} 
+                      alt={req.name} 
+                      className="w-12 h-12 rounded-full object-cover border border-amber-500" 
+                    />
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-sm text-white">{req.name}</h3>
+                        <span className={`text-[10px] px-2 py-0.5 rounded border ${
+                          req.role === 'كاتب' ? 'bg-blue-950 text-blue-300 border-blue-800' : 'bg-indigo-950 text-indigo-300 border-indigo-800'
+                        }`}>
+                          طلب دور: {req.role}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">{req.bio || 'لا توجد نبذة مرفقة'}</p>
+                      <span className="text-[10px] text-gray-500 mt-0.5 block">{req.date}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                    <button 
+                      onClick={() => handleApproveRequest(req)}
+                      className="bg-emerald-950 hover:bg-emerald-900 text-emerald-300 px-3 py-1.5 rounded-lg text-xs font-bold border border-emerald-800 transition-all cursor-pointer"
+                    >
+                      موافقة وتفعيل ✔️
+                    </button>
+                    <button 
+                      onClick={() => handleRejectRequest(req.id)}
+                      className="bg-rose-950 hover:bg-rose-900 text-rose-300 px-3 py-1.5 rounded-lg text-xs border border-rose-900 transition-all cursor-pointer"
+                    >
+                      رفض ✖
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* نموذج إضافة عضو جديد يدويًا */}
         <div className="bg-[#0e1630] border border-blue-900/60 rounded-2xl p-6 shadow-xl">
-          <h2 className="text-lg font-bold text-amber-400 mb-4">إضافة كارت عضو جديد للمنصة ➕</h2>
+          <h2 className="text-lg font-bold text-white mb-4">إضافة كارت عضو جديد يدويًا ➕</h2>
           
           <form onSubmit={handleAddMember} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
