@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -10,6 +9,7 @@ interface Article {
   writer: string;
   category: string;
   content: string;
+  fontStyle?: string;
   status: 'pending' | 'published' | 'rejected';
   feedback?: string;
 }
@@ -41,6 +41,13 @@ export default function WriterDashboard() {
   const [submitted, setSubmitted] = useState(false);
   const [myArticles, setMyArticles] = useState<Article[]>([]);
 
+  // حالات أدوات التنسيق والخطوط للكاتب
+  const [selectedFont, setSelectedFont] = useState('font-tajawal');
+  const [selectedSize, setSelectedSize] = useState('text-base');
+  const [isBold, setIsBold] = useState(false);
+  const [isItalic, setIsItalic] = useState(false);
+  const [textAlign, setTextAlign] = useState<'text-right' | 'text-center' | 'text-left'>('text-right');
+
   useEffect(() => {
     // جلب المقالات
     const saved = localStorage.getItem('prometheus_articles');
@@ -56,7 +63,6 @@ export default function WriterDashboard() {
     }
   }, []);
 
-  // 🔴 تصحيح الفحص: قراءة أسماء المقبولين من prometheus_approved_logins
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -71,7 +77,6 @@ export default function WriterDashboard() {
       return;
     }
 
-    // مطابقة الاسم مع قائمة المفعّلين لدى الأدمن (سواء كاتب أو أدمن)
     const isApproved = approvedLogins.some(
       u => u.name.trim().toLowerCase() === cleanName && (u.role === 'كاتب' || u.role === 'أدمن')
     );
@@ -84,7 +89,6 @@ export default function WriterDashboard() {
     }
   };
 
-  // إرسال طلب انضمام للأدمن
   const handleSendRequest = (e: React.FormEvent) => {
     e.preventDefault();
     if (!regName.trim()) return;
@@ -116,12 +120,15 @@ export default function WriterDashboard() {
     e.preventDefault();
     if (!title || !content || !category || !writerNameInput) return;
 
+    const fontStyleClass = `${selectedFont} ${selectedSize} ${isBold ? 'font-bold' : 'font-normal'} ${isItalic ? 'italic' : ''} ${textAlign}`;
+
     const newArticle: Article = {
       id: Date.now(),
       title,
       writer: writerNameInput,
       category,
       content,
+      fontStyle: fontStyleClass,
       status: 'pending',
     };
 
@@ -231,14 +238,14 @@ export default function WriterDashboard() {
         </button>
       </nav>
 
-      <section className="max-w-3xl mx-auto px-4 py-10 w-full flex-1 flex flex-col gap-10">
+      <section className="max-w-4xl mx-auto px-4 py-10 w-full flex-1 flex flex-col gap-10">
         {/* متابعة المقالات */}
         {myArticles.length > 0 && (
           <div className="bg-[#0e1630] border border-blue-900/40 rounded-2xl p-6 shadow-xl flex flex-col gap-4">
             <h2 className="text-lg font-bold text-amber-400">حالة مقالاتك المرسلة 📋</h2>
             <div className="flex flex-col gap-3">
               {myArticles.map(art => (
-                <div key={art.id} className="bg-slate-950/60 p-4 rounded-xl border border-blue-950 flex justify-between items-center">
+                <div key={art.id} className="bg-slate-950/60 p-4 rounded-xl border border-blue-950 flex justify-between items-center flex-wrap gap-2">
                   <span className="font-bold text-sm">{art.title}</span>
                   <div className="flex gap-2 items-center">
                     {art.status === 'pending' && <span className="text-xs bg-amber-950/50 text-amber-400 px-2.5 py-1 rounded-full border border-amber-900">قيد المراجعة ⏳</span>}
@@ -252,19 +259,158 @@ export default function WriterDashboard() {
           </div>
         )}
 
-        {/* نموذج إضافة مقال */}
+        {/* نموذج إضافة مقال مع أداة التنسيق والخطوط */}
         <div className="bg-[#0e1630] border border-blue-900/40 rounded-2xl p-6 md:p-8 shadow-xl flex flex-col gap-6">
           <h1 className="text-xl font-bold text-white">إنشاء مقال جديد 🚀</h1>
+          
           {submitted && (
             <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-800 text-amber-300 text-xs text-center">
               ✨ تم إرسال مقالك بنجاح لرئيس التحرير!
             </div>
           )}
+
           <form onSubmit={handleSubmitArticle} className="flex flex-col gap-4">
-            <input type="text" placeholder="عنوان المقال..." value={title} onChange={(e) => setTitle(e.target.value)} required className="w-full px-4 py-3 rounded-xl bg-slate-950/60 border border-blue-950 text-sm text-white focus:outline-none" />
-            <input type="text" placeholder="القسم (فيزياء، طب، هندسة...)..." value={category} onChange={(e) => setCategory(e.target.value)} required className="w-full px-4 py-3 rounded-xl bg-slate-950/60 border border-blue-950 text-sm text-white focus:outline-none" />
-            <textarea rows={6} placeholder="اكتب محتوى المقال هنا..." value={content} onChange={(e) => setContent(e.target.value)} required className="w-full px-4 py-3 rounded-xl bg-slate-950/60 border border-blue-950 text-sm text-white focus:outline-none resize-none" />
-            <button type="submit" className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm cursor-pointer">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <input 
+                type="text" 
+                placeholder="عنوان المقال..." 
+                value={title} 
+                onChange={(e) => setTitle(e.target.value)} 
+                required 
+                className="w-full px-4 py-3 rounded-xl bg-slate-950/60 border border-blue-950 text-sm text-white focus:outline-none" 
+              />
+              <input 
+                type="text" 
+                placeholder="القسم (فيزياء، طب، هندسة...)..." 
+                value={category} 
+                onChange={(e) => setCategory(e.target.value)} 
+                required 
+                className="w-full px-4 py-3 rounded-xl bg-slate-950/60 border border-blue-950 text-sm text-white focus:outline-none" 
+              />
+            </div>
+
+            {/* 🎛️ شريط أدوات التحكم بالخطوط والتنسيق (30 خطاً) */}
+            <div className="bg-slate-950 border border-blue-900/80 rounded-xl p-3 flex flex-wrap items-center gap-3 shadow-inner">
+              <span className="text-xs text-amber-400 font-bold border-l border-blue-900 pl-3">أدوات التنسيق:</span>
+
+              {/* اختيار نوع الخط (30 خطاً) */}
+              <select
+                value={selectedFont}
+                onChange={(e) => setSelectedFont(e.target.value)}
+                className="bg-slate-900 text-xs text-gray-200 border border-blue-900 rounded-lg p-2 focus:outline-none focus:border-amber-500 cursor-pointer"
+              >
+                <optgroup label="الخطوط العربية (15 خطاً)">
+                  <option value="font-tajawal">Tajawal - تجوال (حديث ومريح)</option>
+                  <option value="font-cairo">Cairo - القاهرة (العصري الشهير)</option>
+                  <option value="font-almarai">Almarai - المراعي (واضح وأنيق)</option>
+                  <option value="font-alexandria">Alexandria - الإسكندرية (هندسي تقني)</option>
+                  <option value="font-ibm-arabic">IBM Plex Arabic - خط آي بي إم</option>
+                  <option value="font-noto">Noto Kufi - كوفي كلاسيكي حديث</option>
+                  <option value="font-changa">Changa - شانغا (عريض ومميز)</option>
+                  <option value="font-amiri">Amiri - أميري (نسخي فخم)</option>
+                  <option value="font-aref">Aref Ruqaa - رقعة كلاسيكي</option>
+                  <option value="font-el-messiri">El Messiri - المسيري (فني راقي)</option>
+                  <option value="font-marhey">Marhey - مرحي (إبداعي ومرح)</option>
+                  <option value="font-lalezar">Lalezar - لاليزار (عريض عناوين)</option>
+                  <option value="font-lemonada">Lemonada - ليمونادة (انسيابي)</option>
+                  <option value="font-kufam">Kufam - كوفام (زخرفي مميز)</option>
+                  <option value="font-lateef">Lateef - لطيف (نسخي دافئ)</option>
+                </optgroup>
+
+                <optgroup label="English Fonts (15 Fonts)">
+                  <option value="font-inter">Inter (Clean & Modern UI)</option>
+                  <option value="font-roboto">Roboto (Standard Android Font)</option>
+                  <option value="font-poppins">Poppins (Geometric & Friendly)</option>
+                  <option value="font-montserrat">Montserrat (Bold & Editorial)</option>
+                  <option value="font-lato">Lato (Warm & Professional)</option>
+                  <option value="font-oswald">Oswald (Condensed Titles)</option>
+                  <option value="font-playfair">Playfair Display (Luxury Serif)</option>
+                  <option value="font-merriweather">Merriweather (Classic Editorial)</option>
+                  <option value="font-lora">Lora (Elegant Book Style)</option>
+                  <option value="font-cinzel">Cinzel (Cinematic & Royal)</option>
+                  <option value="font-space">Space Grotesk (Tech & Cyberpunk)</option>
+                  <option value="font-syne">Syne (Artistic & Unique)</option>
+                  <option value="font-fira">Fira Code (Developer / Monospace)</option>
+                  <option value="font-pacifico">Pacifico (Handwritten Script)</option>
+                </optgroup>
+              </select>
+
+              {/* اختيار الحجم */}
+              <select
+                value={selectedSize}
+                onChange={(e) => setSelectedSize(e.target.value)}
+                className="bg-slate-900 text-xs text-gray-200 border border-blue-900 rounded-lg p-2 focus:outline-none focus:border-amber-500 cursor-pointer"
+              >
+                <option value="text-xs">حجم صغير جداً (XS)</option>
+                <option value="text-sm">حجم صغير (SM)</option>
+                <option value="text-base">حجم عادي (MD)</option>
+                <option value="text-lg">حجم كبير (LG)</option>
+                <option value="text-xl">عنوان فرعي (XL)</option>
+                <option value="text-2xl">عنوان عريض (2XL)</option>
+              </select>
+
+              {/* سمك الخط (عريض Bold) */}
+              <button
+                type="button"
+                onClick={() => setIsBold(!isBold)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                  isBold ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-900 text-gray-300 border-blue-900'
+                }`}
+              >
+                عريض (B)
+              </button>
+
+              {/* مائل Italic */}
+              <button
+                type="button"
+                onClick={() => setIsItalic(!isItalic)}
+                className={`px-3 py-1.5 rounded-lg text-xs italic border transition-all cursor-pointer ${
+                  isItalic ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-900 text-gray-300 border-blue-900'
+                }`}
+              >
+                مائل (I)
+              </button>
+
+              {/* اتجاه المحاذاة */}
+              <div className="flex gap-1 border-r border-blue-900 pr-3">
+                <button
+                  type="button"
+                  onClick={() => setTextAlign('text-right')}
+                  className={`p-1.5 rounded text-xs border cursor-pointer ${textAlign === 'text-right' ? 'bg-amber-500/20 text-amber-400 border-amber-500' : 'bg-slate-900 text-gray-400 border-blue-900'}`}
+                  title="يمين"
+                >
+                  ➡️
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTextAlign('text-center')}
+                  className={`p-1.5 rounded text-xs border cursor-pointer ${textAlign === 'text-center' ? 'bg-amber-500/20 text-amber-400 border-amber-500' : 'bg-slate-900 text-gray-400 border-blue-900'}`}
+                  title="وسط"
+                >
+                  ↔️
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTextAlign('text-left')}
+                  className={`p-1.5 rounded text-xs border cursor-pointer ${textAlign === 'text-left' ? 'bg-amber-500/20 text-amber-400 border-amber-500' : 'bg-slate-900 text-gray-400 border-blue-900'}`}
+                  title="يسار"
+                >
+                  ⬅️
+                </button>
+              </div>
+            </div>
+
+            {/* مربع كتابة محتوى المقال (المعاينة الحية) */}
+            <textarea 
+              rows={8} 
+              placeholder="اكتب محتوى المقال هنا مع معاينة حية للتنسيق والخط المختار..." 
+              value={content} 
+              onChange={(e) => setContent(e.target.value)} 
+              required 
+              className={`w-full px-4 py-3 rounded-xl bg-slate-950/60 border border-blue-950 text-white focus:outline-none resize-none leading-relaxed ${selectedFont} ${selectedSize} ${isBold ? 'font-bold' : 'font-normal'} ${isItalic ? 'italic' : ''} ${textAlign}`} 
+            />
+
+            <button type="submit" className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm cursor-pointer shadow-lg transition-all">
               إرسال لرئيس التحرير 📤
             </button>
           </form>
