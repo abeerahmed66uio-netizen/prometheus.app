@@ -14,7 +14,7 @@ interface Article {
   feedback?: string;
 }
 
-interface TeamMember {
+interface ApprovedLogin {
   id: number;
   name: string;
   role: string;
@@ -40,8 +40,6 @@ export default function WriterDashboard() {
   const [content, setContent] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [myArticles, setMyArticles] = useState<Article[]>([]);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editContent, setEditContent] = useState('');
 
   useEffect(() => {
     // جلب المقالات
@@ -58,10 +56,14 @@ export default function WriterDashboard() {
     }
   }, []);
 
-  // فحص الاسم أثناء تسجيل الدخول
+  // 🔴 تصحيح الفحص: قراءة أسماء المقبولين من prometheus_approved_logins
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    const approvedMembers: TeamMember[] = JSON.parse(localStorage.getItem('prometheus_team_members') || '[]');
+    
+    const approvedLogins: ApprovedLogin[] = JSON.parse(
+      localStorage.getItem('prometheus_approved_logins') || '[]'
+    );
+    
     const cleanName = writerNameInput.trim().toLowerCase();
 
     if (!cleanName) {
@@ -69,16 +71,16 @@ export default function WriterDashboard() {
       return;
     }
 
-    // مطابقة الاسم مع الأعضاء الذين وافق عليهم الأدمن
-    const isApproved = approvedMembers.some(
-      m => m.name.trim().toLowerCase() === cleanName && (m.role === 'كاتب' || m.role === 'أدمن')
+    // مطابقة الاسم مع قائمة المفعّلين لدى الأدمن (سواء كاتب أو أدمن)
+    const isApproved = approvedLogins.some(
+      u => u.name.trim().toLowerCase() === cleanName && (u.role === 'كاتب' || u.role === 'أدمن')
     );
 
     if (isApproved) {
       setIsAuthenticated(true);
       localStorage.setItem('prometheus_active_writer', writerNameInput.trim());
     } else {
-      alert('عذراً، هذا الاسم غير مقبول من قبل الأدمن بعد! أو لم تقم بتقديم طلب انضمام.');
+      alert('عذراً، هذا الاسم غير مقبول من قبل الأدمن بعد! أو أنك لم تقدم طلب انضمام ككاتب.');
     }
   };
 
@@ -94,7 +96,9 @@ export default function WriterDashboard() {
       date: new Date().toLocaleDateString('ar-EG'),
     };
 
-    const pending: PendingRequest[] = JSON.parse(localStorage.getItem('prometheus_pending_requests') || '[]');
+    const pending: PendingRequest[] = JSON.parse(
+      localStorage.getItem('prometheus_pending_requests') || '[]'
+    );
     localStorage.setItem('prometheus_pending_requests', JSON.stringify([newRequest, ...pending]));
 
     setWriterNameInput(regName.trim());
@@ -152,7 +156,7 @@ export default function WriterDashboard() {
               <span className="text-4xl">⏳</span>
               <h1 className="text-lg font-bold text-amber-400">تم إرسال طلبك بنجاح!</h1>
               <p className="text-xs text-gray-300">
-                طلبك بانتظار موافقة الأدمن. بعد موافقة الأدمن، فقط عد للموقع واكتب اسمك (<span className="text-amber-400 font-bold">{writerNameInput}</span>) وسيتم فتح اللوحة فوراً!
+                طلبك بانتظار موافقة الأدمن. بعد موافقة الأدمن، عد واكتب اسمك (<span className="text-amber-400 font-bold">{writerNameInput}</span>) وسيفتح لك السيستم فوراً.
               </p>
               <button 
                 onClick={() => { setRequestSent(false); setIsRegistering(false); }}
