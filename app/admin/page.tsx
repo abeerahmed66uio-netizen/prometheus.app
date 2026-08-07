@@ -21,6 +21,12 @@ interface UserRequest {
   date: string;
 }
 
+interface ApprovedLogin {
+  id: number;
+  name: string;
+  role: string;
+}
+
 export default function AdminDashboard() {
   // حالات المصادقة وكلمة المرور
   const [adminPassword, setAdminPassword] = useState<string | null>(null);
@@ -34,7 +40,7 @@ export default function AdminDashboard() {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [pendingRequests, setPendingRequests] = useState<UserRequest[]>([]);
   
-  // نموذج إضافة عضو جديد يدويًا
+  // نموذج إضافة عضو جديد يدويًا (الكروت الخاصة بالصفحة الرئيسية)
   const [name, setName] = useState('');
   const [role, setRole] = useState('');
   const [image, setImage] = useState('');
@@ -109,7 +115,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // حفظ الأعضاء في LocalStorage
+  // حفظ كروت الأعضاء في LocalStorage (الكروت العرض فقط)
   const saveMembersToLocalStorage = (updatedMembers: TeamMember[]) => {
     setMembers(updatedMembers);
     localStorage.setItem('prometheus_team_members', JSON.stringify(updatedMembers));
@@ -121,35 +127,38 @@ export default function AdminDashboard() {
     localStorage.setItem('prometheus_pending_requests', JSON.stringify(updatedRequests));
   };
 
-  // موافقة الأدمن على طلب انضمام (كاتب / محرر)
+  // 🔴 التعديل الجوهري هنا: موافقة الأدمن تمنح صلاحية الدخول فقط، ولا تُنشئ كارت في الصفحة الرئيسية
   const handleApproveRequest = (request: UserRequest) => {
-    const newMember: TeamMember = {
+    const approvedLogins: ApprovedLogin[] = JSON.parse(
+      localStorage.getItem('prometheus_approved_logins') || '[]'
+    );
+
+    const newApprovedLogin: ApprovedLogin = {
       id: Date.now(),
-      name: request.name,
-      role: request.role === 'كاتب' ? 'كاتب محتوى' : 'محرر ومراجع',
-      image: request.image || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500',
-      volunteerHours: 0,
-      bio: request.bio || 'عضو معتمد في الفريق.',
+      name: request.name.trim(),
+      role: request.role,
     };
 
-    // إضافة العضو للأعضاء المعتمدين
-    const updatedMembers = [newMember, ...members];
-    saveMembersToLocalStorage(updatedMembers);
+    // 1. تفعيل صلاحية الدخول باسم العضو فقط
+    localStorage.setItem(
+      'prometheus_approved_logins',
+      JSON.stringify([...approvedLogins, newApprovedLogin])
+    );
 
-    // حذف الطلب من قائمة المعلقات
-    const updatedRequests = pendingRequests.filter(r => r.id !== request.id);
+    // 2. إزالة الطلب من قائمة الطلبات المعلقة
+    const updatedRequests = pendingRequests.filter((r) => r.id !== request.id);
     saveRequestsToLocalStorage(updatedRequests);
 
-    alert(`تمت الموافقة على طلب ${request.name} وإضافته للأعضاء بنجاح! 🎉`);
+    alert(`تمت الموافقة وتفعيل حساب (${request.name}) بنجاح! يمكنه الآن دخول لوحته باسمه دون إضافة كارت له في الصفحة الرئيسية. 🎉`);
   };
 
   // رفض طلب الانضمام
   const handleRejectRequest = (id: number) => {
-    const updatedRequests = pendingRequests.filter(r => r.id !== id);
+    const updatedRequests = pendingRequests.filter((r) => r.id !== id);
     saveRequestsToLocalStorage(updatedRequests);
   };
 
-  // إضافة عضو يدويًا من قبل الأدمن
+  // إضافة كارت عضو يدويًا من قبل الأدمن حصراً للظهور بالصفحة الرئيسية
   const handleAddMember = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !role) return;
@@ -171,12 +180,12 @@ export default function AdminDashboard() {
     setImage('');
     setVolunteerHours('');
     setBio('');
-    alert('تم إضافة الكارت بنجاح وسيحفظ للمشاهدين! 🚀');
+    alert('تم إضافة كارت العضو بنجاح وسيحفظ للمشاهدين على الصفحة الرئيسية! 🚀');
   };
 
-  // حذف عضو
+  // حذف كارت عضو
   const handleDeleteMember = (id: number) => {
-    const updated = members.filter(m => m.id !== id);
+    const updated = members.filter((m) => m.id !== id);
     saveMembersToLocalStorage(updated);
   };
 
@@ -321,7 +330,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* قسم الطلبات المعلقة (الموافقة والرفض) */}
+        {/* قسم الطلبات المعلقة (تفعيل صلاحيات فقط بدون إنشاء كروت) */}
         <div className="bg-[#0e1630] border border-amber-500/40 rounded-2xl p-6 shadow-xl">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-bold text-amber-400 flex items-center gap-2">
@@ -330,16 +339,16 @@ export default function AdminDashboard() {
                 {pendingRequests.length}
               </span>
             </h2>
-            <span className="text-xs text-gray-400">طلبات الكُتاب والمحررين بانتظار موافقتك</span>
+            <span className="text-xs text-gray-400">طلبات الكُتاب والمحررين بانتظار تفعيل الصلاحية</span>
           </div>
 
           <div className="flex flex-col gap-3">
             {pendingRequests.length === 0 ? (
               <p className="text-xs text-gray-400 text-center py-6 bg-slate-950/40 rounded-xl border border-blue-950">
-                لا توجد طلبت تسجیل معلقة حالیاً.
+                لا توجد طلبات تسجيل معلقة حالياً.
               </p>
             ) : (
-              pendingRequests.map(req => (
+              pendingRequests.map((req) => (
                 <div key={req.id} className="bg-slate-950/80 border border-blue-900/60 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <div className="flex items-center gap-3">
                     <img 
@@ -366,7 +375,7 @@ export default function AdminDashboard() {
                       onClick={() => handleApproveRequest(req)}
                       className="bg-emerald-950 hover:bg-emerald-900 text-emerald-300 px-3 py-1.5 rounded-lg text-xs font-bold border border-emerald-800 transition-all cursor-pointer"
                     >
-                      موافقة وتفعيل ✔️
+                      تفعيل الحساب فقط ✔️
                     </button>
                     <button 
                       onClick={() => handleRejectRequest(req.id)}
@@ -381,7 +390,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* نموذج إضافة عضو جديد يدويًا */}
+        {/* نموذج إضافة كارت عضو جديد يدويًا للأدمن حصراً */}
         <div className="bg-[#0e1630] border border-blue-900/60 rounded-2xl p-6 shadow-xl">
           <h2 className="text-lg font-bold text-white mb-4">إضافة كارت عضو جديد يدويًا ➕</h2>
           
@@ -452,15 +461,15 @@ export default function AdminDashboard() {
           </form>
         </div>
 
-        {/* قائمة الأعضاء الحاليين للتحكم والحذف */}
+        {/* قائمة الكروت المضافة حالياً للتحكم والحذف */}
         <div className="bg-[#0e1630] border border-blue-900/60 rounded-2xl p-6 shadow-xl">
           <h2 className="text-lg font-bold text-white mb-4">الكروت المضافة حالياً ({members.length}) 📋</h2>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {members.length === 0 ? (
-              <p className="text-xs text-gray-400 col-span-full text-center py-6">لم تقم بإضافة أي عضو حتى الآن.</p>
+              <p className="text-xs text-gray-400 col-span-full text-center py-6">لم تقم بإضافة أي كارت عضو حتى الآن.</p>
             ) : (
-              members.map(member => (
+              members.map((member) => (
                 <div key={member.id} className="bg-slate-950/80 border border-blue-950 rounded-xl p-4 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <img src={member.image} alt={member.name} className="w-12 h-12 rounded-full object-cover border border-amber-500" />
