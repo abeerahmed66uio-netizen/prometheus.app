@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -20,9 +21,17 @@ interface Article {
   date: string;
 }
 
+interface Achievement {
+  id: number;
+  title: string;
+  description: string;
+  date: string;
+}
+
 export default function Home() {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [articles, setArticles] = useState<Article[]>([]);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [showMembersModal, setShowMembersModal] = useState(false);
   const [showMagazineModal, setShowMagazineModal] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -43,6 +52,13 @@ export default function Home() {
     if (savedArticles) {
       try {
         setArticles(JSON.parse(savedArticles));
+      } catch (e) {}
+    }
+
+    const savedAchievements = localStorage.getItem('prometheus_achievements');
+    if (savedAchievements) {
+      try {
+        setAchievements(JSON.parse(savedAchievements));
       } catch (e) {}
     }
   }, []);
@@ -90,7 +106,6 @@ export default function Home() {
 
             {showMenu && (
               <div className="absolute left-0 mt-2 bg-[#0e1630] border border-blue-900 rounded-xl p-2 shadow-2xl flex flex-col gap-2 z-50 min-w-[170px]">
-                {/* أقسام المنصة */}
                 <button 
                   onClick={openMagazine}
                   className="bg-amber-950/80 hover:bg-amber-900 text-amber-300 px-3 py-2 rounded-lg border border-amber-900/80 text-sm font-black transition-all text-center flex items-center justify-between cursor-pointer"
@@ -98,7 +113,6 @@ export default function Home() {
                   <span>المجلة الرسمية</span>
                   <span>📖</span>
                 </button>
-
                 <button 
                   onClick={openMembers}
                   className="bg-purple-950/80 hover:bg-purple-900 text-purple-300 px-3 py-2 rounded-lg border border-purple-900/80 text-sm font-black transition-all text-center flex items-center justify-between cursor-pointer"
@@ -106,10 +120,8 @@ export default function Home() {
                   <span>الأعضاء</span>
                   <span>👥</span>
                 </button>
-
                 <div className="border-t border-blue-950 my-1"></div>
 
-                {/* لوحات التحكم والعمل */}
                 <Link href="/writer" onClick={() => setShowMenu(false)} className="bg-blue-950/80 hover:bg-blue-900 text-blue-300 px-3 py-2 rounded-lg border border-blue-900 text-sm font-black transition-all text-center flex items-center justify-between">
                   <span>كاتب</span>
                   <span>✍️</span>
@@ -129,7 +141,7 @@ export default function Home() {
       </nav>
 
       {/* المحتوى الرئيسي */}
-      <div className="max-w-5xl mx-auto w-full flex flex-col gap-8 my-8">
+      <div className="max-w-5xl mx-auto w-full flex flex-col gap-10 my-8">
         
         <div className="text-center py-6 sm:py-10 flex flex-col items-center gap-4">
           <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight leading-snug">
@@ -140,14 +152,184 @@ export default function Home() {
           </p>
         </div>
 
-        {/* قسم عن بروميثوس */}
-        <div className="bg-[#0e1630] border border-blue-900/40 rounded-2xl p-6 sm:p-8 shadow-xl">
-          <h2 className="text-xl sm:text-2xl font-black mb-4 text-amber-400">عن بروميثوس 🌟</h2>
+        {/* قسم شعار واسم الفريق والصورة */}
+        <div className="bg-[#0e1630] border border-amber-500/30 rounded-2xl p-6 sm:p-8 shadow-xl flex flex-col items-center text-center gap-6">
+          <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-2xl bg-slate-950 border-2 border-amber-500/60 flex items-center justify-center p-3 shadow-2xl">
+            {/* مكان صورة شعار الفريق */}
+            <span className="text-4xl">🔥</span>
+          </div>
+          <div className="flex flex-col gap-3">
+            <h2 className="text-2xl sm:text-3xl font-black text-amber-400">شعار واسم الفريق</h2>
+            <p className="text-sm sm:text-base text-gray-200 leading-relaxed font-bold max-w-3xl">
+              بروميثيوس، أسمٌ من قلب الأساطير والميثولوجيا الاغريقية، بروميثيوس الذي أعطى للبشر نار المعرفة، ومن هذا الرمزية نؤمن بنشر شعلة المعرفة بين الشباب والمجتمع لتغيير الواقع نحو أبهى صوره.
+              <br/><br/>
+              اما عن شعار الفريق، نرى بوضوح حرفي P و T، ففي الحرف الاول نرى تجسيد لعلامة فاي-Phi، رمز النسبة الذهبية والتوازن في علوم الرياضيات، اما عن الحرف الثاني ففيه تتجسد شعلة بروميثيوس، مما نراه نحن شعلة المعرفة التي نسعى جاهدين لنشرها وتمكين الشباب العراقي وتسليحه بالعلم والثقافة.
+            </p>
+          </div>
+        </div>
+
+        {/* شبكة الأقسام والتعريفات */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          {/* من نحن */}
+          <div className="bg-[#0e1630] border border-blue-900/50 rounded-2xl p-6 shadow-xl flex flex-col gap-3">
+            <h3 className="text-xl font-black text-amber-400 border-b border-blue-950 pb-2">من نحن؟</h3>
+            <p className="text-sm sm:text-base text-gray-200 leading-relaxed font-bold">
+              مجموعة شبابية طموحة وهادفة إلى تطوير أساليب وبيئات التعليم والتعلم وتمكين الشباب والمواهب من خلال المبادرات التعليمية، الفرق والتطوعات البحثية والتقنية، مؤمنين بأن المعرفة والإتقان للمهارة هي الأساس الفعال لبناء مستقبل أجمل وأجيال أرقى.
+            </p>
+          </div>
+
+          {/* رؤية الفريق */}
+          <div className="bg-[#0e1630] border border-blue-900/50 rounded-2xl p-6 shadow-xl flex flex-col gap-3">
+            <h3 className="text-xl font-black text-amber-400 border-b border-blue-950 pb-2">رؤية الفريق</h3>
+            <p className="text-sm sm:text-base text-gray-200 leading-relaxed font-bold">
+              ان نكون فريق متكامل او منظمة جاهزة وقادرة على ان تكون الجهة الأبرز في البلد والمنطقة العربية في مجالات التعليم والبحث العلمي والتمكين الشبابي.
+            </p>
+          </div>
+
+          {/* رسالة الفريق */}
+          <div className="bg-[#0e1630] border border-blue-900/50 rounded-2xl p-6 shadow-xl flex flex-col gap-3">
+            <h3 className="text-xl font-black text-amber-400 border-b border-blue-950 pb-2">رسالة الفريق</h3>
+            <p className="text-sm sm:text-base text-gray-200 leading-relaxed font-bold">
+              نسعى إلى تقديم برامج، مبادرات و مشاريع تعليمية و بحثية مبتكرة، وبناء مجتمع شاب يمتلك المعرفة والمهارة اللازمة لصناعة التغيير.
+            </p>
+          </div>
+
+          {/* أهداف الفريق */}
+          <div className="bg-[#0e1630] border border-blue-900/50 rounded-2xl p-6 shadow-xl flex flex-col gap-3">
+            <h3 className="text-xl font-black text-amber-400 border-b border-blue-950 pb-2">أهداف الفريق</h3>
+            <p className="text-sm sm:text-base text-gray-200 leading-relaxed font-bold">
+              نشر المعرفة التقنية والعلمية، دعم وتطوير اساليب البحث العلمي للشباب، تطوير المهارات عند الطلبة، تعزيز العمل التطوعي ونشر قيمته الحقيقية في تطوير المجتمع، بناء مجتمع تعليمي متعاون ومستدام، توفير فرص تعلم، تدريب وتطوير المهارات الفنية، ربط الشباب العراقي بكافة أنواع الفرص المحلية والعالمية، تغيير صورة التعليم والتعلم في البلاد إلى القيمة الحقيقية والصورة الأمثل لما تحتاجه الأجيال القادمة.
+            </p>
+          </div>
+
+        </div>
+
+        {/* قيم الفريق */}
+        <div className="bg-[#0e1630] border border-blue-900/50 rounded-2xl p-6 sm:p-8 shadow-xl flex flex-col gap-3">
+          <h3 className="text-xl font-black text-amber-400 border-b border-blue-950 pb-2">قيم الفريق</h3>
           <p className="text-sm sm:text-base text-gray-200 leading-relaxed font-bold">
-            تولدت فكرة ودافع الفريق تبعاً لما لوحظ من مشاكل عديدة في النظام التعليمي عامة بدءاً من الأساليب القديمة غير المفيدة بعد اليوم إلى الفجوة بين سبل الدراسة والواقع ومتطلباته، ضعف مهارات البحث العلمي، قلة الاهتمام والتوعية بالمهارات التقنية والمهارات الناعمة، وصولاً إلى الاعتماد القاتل على التلقين والحفظ المنصوص بدل الفهم والتفكير النقدي فضلاً عن نقص المبادرات والفرص المقدمة للطلبة لإبراز المواهب والإمكانيات وتنميتها.
-            <br/><br/>
-            وبناءً على هذا الوضع، قررنا في بروميثوس أن نتخذ دور المصلح ونساهم في التغيير بدل اللوم وارتداء دور الضحية طوال الوقت، فنعزم على إيجاد الحلول وخلقها إن لم توجد، حلول قابلة للتطبيق ومدروسة لتصنع أثراً مستمراً عبر الأجيال وللمدى الطويل.
+            نحرص في مجموعتنا على الالتزام بـ الإبداع، الشفافية، التعاون، الاحترام المتبادل، الالتزام بالمسؤولية، التعلم المستمر، الجودة العالية والابتكار، التوجه نحو تطوير العلم والمعرفة فقط دون النظر إلى اي توجه سياسي، قومي او ديني.
           </p>
+        </div>
+
+        {/* ماذا نقدم ومجالات عملنا */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-[#0e1630] border border-blue-900/50 rounded-2xl p-6 shadow-xl flex flex-col gap-3">
+            <h3 className="text-xl font-black text-amber-400 border-b border-blue-950 pb-2">ماذا نقدم؟</h3>
+            <ul className="text-sm sm:text-base text-gray-200 leading-relaxed font-bold flex flex-col gap-2 list-disc list-inside">
+              <li>ورش تدريبية، توعوية وتعليمية بمجالات مختلفة.</li>
+              <li>دورات تعليمية.</li>
+              <li>مسابقات.</li>
+              <li>مشاريع بحثية تعاونية.</li>
+              <li>مبادرات مجتمعية.</li>
+              <li>فعاليات تقنية.</li>
+              <li>محتوى تعليمي توعوي عالي الجودة بمختلف المواضيع.</li>
+            </ul>
+          </div>
+
+          <div className="bg-[#0e1630] border border-blue-900/50 rounded-2xl p-6 shadow-xl flex flex-col gap-3">
+            <h3 className="text-xl font-black text-amber-400 border-b border-blue-950 pb-2">مجالات عملنا</h3>
+            <p className="text-sm sm:text-base text-gray-200 leading-relaxed font-bold">
+              التعليم، التكنولوجيا والتقنية، الذكاء الاصطناعي واستخداماته، البحث العلمي، تطوير المهارات، التطوع والمساهمة المجتمعية.
+            </p>
+          </div>
+        </div>
+
+        {/* خانة آخر المقالات المنشورة على المجلة */}
+        <div className="bg-[#0e1630] border border-blue-900/50 rounded-2xl p-6 sm:p-8 shadow-xl flex flex-col gap-4">
+          <div className="flex justify-between items-center border-b border-blue-950 pb-3">
+            <h3 className="text-xl font-black text-amber-400">آخر المقالات المنشورة 📖</h3>
+            <button onClick={openMagazine} className="text-xs sm:text-sm text-indigo-300 font-black hover:text-amber-400 transition-colors">
+              عرض كل المجلة ←
+            </button>
+          </div>
+
+          {articles.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-6 font-bold">لا توجد مقالات منشورة حالياً.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {articles.slice(-3).reverse().map(art => (
+                <div key={art.id} className="bg-slate-950/60 border border-blue-950 rounded-xl p-4 flex flex-col justify-between gap-3">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="bg-amber-950 text-amber-400 px-2.5 py-0.5 rounded-full border border-amber-900 font-black">{art.category}</span>
+                    <span className="text-gray-400 font-bold">{art.date}</span>
+                  </div>
+                  <h4 className="font-black text-base text-white">{art.title}</h4>
+                  <p className="text-xs text-gray-300 line-clamp-2 font-bold">{art.content}</p>
+                  <span className="text-xs text-indigo-300 font-black mt-2">الكاتب: {art.author}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* إنجازاتنا */}
+        <div className="bg-[#0e1630] border border-blue-900/50 rounded-2xl p-6 sm:p-8 shadow-xl flex flex-col gap-4">
+          <h3 className="text-xl font-black text-amber-400 border-b border-blue-950 pb-3">إنجازاتنا 🏆</h3>
+          {achievements.length === 0 ? (
+            <div className="text-center py-8 bg-slate-950/40 rounded-xl border border-blue-950">
+              <p className="text-base text-amber-400 font-black">قريباً</p>
+              <p className="text-xs text-gray-400 mt-1 font-bold">سيتم إدراج إنجازات الفريق وفعالياته قريباً من قِبل الإدارة.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {achievements.map(ach => (
+                <div key={ach.id} className="bg-slate-950/60 border border-blue-950 p-4 rounded-xl flex flex-col gap-2">
+                  <span className="text-xs text-amber-400 font-black">{ach.date}</span>
+                  <h4 className="font-black text-base text-white">{ach.title}</h4>
+                  <p className="text-xs text-gray-200 font-bold">{ach.description}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* شركاؤنا */}
+        <div className="bg-[#0e1630] border border-blue-900/50 rounded-2xl p-6 sm:p-8 shadow-xl flex flex-col items-center text-center gap-3">
+          <h3 className="text-xl font-black text-amber-400">شركاؤنا 🤝</h3>
+          <p className="text-base text-gray-300 font-black py-4">قريباً...</p>
+        </div>
+
+        {/* روابط التواصل الاجتماعي والـ Footer */}
+        <div className="flex flex-col items-center gap-6 pt-6 border-t border-blue-950">
+          <div className="flex items-center gap-6">
+            {/* انستغرام */}
+            <a 
+              href="https://www.instagram.com/p78team?igsh=MXRzdWFjc2lld3J1bQ==" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="w-12 h-12 rounded-full bg-pink-950/80 border border-pink-900 flex items-center justify-center text-pink-400 hover:scale-110 transition-transform shadow-lg"
+              title="انستغرام"
+            >
+              📷
+            </a>
+
+            {/* تليجرام */}
+            <a 
+              href="https://t.me/PrometheusTeam1" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="w-12 h-12 rounded-full bg-sky-950/80 border border-sky-900 flex items-center justify-center text-sky-400 hover:scale-110 transition-transform shadow-lg"
+              title="تليجرام"
+            >
+              ✈️
+            </a>
+
+            {/* فيسبوك */}
+            <a 
+              href="#" 
+              onClick={(e) => { e.preventDefault(); alert('رابط الفيسبوك سيتم إضافته قريباً من قِبل الإدارة.'); }}
+              className="w-12 h-12 rounded-full bg-blue-950/80 border border-blue-900 flex items-center justify-center text-blue-400 hover:scale-110 transition-transform shadow-lg cursor-pointer"
+              title="فيسبوك (قريباً)"
+            >
+              📘
+            </a>
+          </div>
+
+          <footer className="text-center text-xs sm:text-sm text-gray-400 font-bold">
+            <p>© {currentYear ?? ''} مبادرة بروميثوس. جميع الحقوق محفوظة.</p>
+          </footer>
         </div>
 
       </div>
@@ -307,11 +489,6 @@ export default function Home() {
           </div>
         </div>
       )}
-
-      {/* التذييل (Footer) */}
-      <footer className="max-w-6xl mx-auto w-full text-center text-xs sm:text-sm text-gray-400 border-t border-blue-950 pt-6 mt-12 font-bold">
-        <p>© {currentYear ?? ''} مبادرة بروميثوس. جميع الحقوق محفوظة.</p>
-      </footer>
 
     </main>
   );
