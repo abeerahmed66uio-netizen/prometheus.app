@@ -18,6 +18,7 @@ interface Article {
 export default function EditorDashboard() {
   // حماية بكلمة مرور لرئيس التحرير
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [editorNameInput, setEditorNameInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
 
   const [articles, setArticles] = useState<Article[]>([]);
@@ -37,12 +38,20 @@ export default function EditorDashboard() {
     }
   }, []);
 
+  // تسجيل الدخول بالاسم الصريح وكلمة المرور التي حددها الأدمن
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (passwordInput === 'editor123' || passwordInput === 'admin123') {
+    const savedAdminPassword = localStorage.getItem('prometheus_admin_password') || 'admin123';
+
+    if (!editorNameInput.trim()) {
+      alert('يرجى إدخال الاسم الصريح!');
+      return;
+    }
+
+    if (passwordInput === savedAdminPassword) {
       setIsAuthenticated(true);
     } else {
-      alert('كلمة المرور غير صحيحة!');
+      alert('كلمة المرور غير صحيحة! يرجى مراجعة الأدمن.');
     }
   };
 
@@ -80,8 +89,10 @@ export default function EditorDashboard() {
   };
 
   const handleDeleteArticle = (id: number) => {
-    const updated = articles.filter(art => art.id !== id);
-    updateArticlesState(updated);
+    if (confirm('هل أنت تأكد من رغبتك في حذف هذه المقالة؟')) {
+      const updated = articles.filter(art => art.id !== id);
+      updateArticlesState(updated);
+    }
   };
 
   const handleUploadBook = (e: React.FormEvent) => {
@@ -95,20 +106,28 @@ export default function EditorDashboard() {
     }, 3000);
   };
 
-  // شاشة إدخال كلمة المرور إذا لم يتم تسجيل الدخول
+  // شاشة إدخال الاسم وكلمة المرور
   if (!isAuthenticated) {
     return (
       <main dir="rtl" className="min-h-screen bg-[#070b19] text-white flex items-center justify-center p-6 font-sans">
         <div className="bg-[#0e1630] border border-blue-900/60 rounded-2xl max-w-md w-full p-8 shadow-2xl flex flex-col gap-6 text-center">
           <div>
             <h1 className="text-xl font-bold text-amber-400 mb-2">تسجيل دخول رئيس التحرير 📝</h1>
-            <p className="text-xs text-gray-400">يرجى إدخال كلمة المرور للوصول إلى لوحة المحرر.</p>
+            <p className="text-xs text-gray-400">يرجى كتابة اسمك الصريح وكلمة المرور الخاصة باللوحة.</p>
           </div>
           <form onSubmit={handleLogin} className="flex flex-col gap-4">
             <input 
+              type="text" 
+              placeholder="اسم المحرر الصريح..." 
+              value={editorNameInput} 
+              onChange={(e) => setEditorNameInput(e.target.value)} 
+              required 
+              className="px-4 py-3 rounded-xl bg-slate-950 border border-blue-950 text-sm text-white focus:outline-none text-center"
+            />
+            <input 
               type="password" 
               placeholder="كلمة المرور..." 
-              value={passwordInput}
+              value={passwordInput} 
               onChange={(e) => setPasswordInput(e.target.value)} 
               required 
               className="px-4 py-3 rounded-xl bg-slate-950 border border-blue-950 text-sm text-white focus:outline-none text-center"
@@ -132,8 +151,8 @@ export default function EditorDashboard() {
           <Link href="/" className="text-xl font-bold">
             PROMETHEUS <span className="text-amber-500">🔥</span>
           </Link>
-          <span className="text-xs bg-amber-950 text-amber-400 px-3 py-1 rounded-full border border-amber-900">
-            لوحة رئيس التحرير (Editor-in-Chief)
+          <span className="text-xs bg-amber-950 text-amber-400 px-3 py-1 rounded-full border border-amber-900 font-bold">
+            أهلاً بك، {editorNameInput} 📝
           </span>
         </div>
         <Link href="/" className="text-xs text-rose-400 hover:underline">
@@ -180,7 +199,7 @@ export default function EditorDashboard() {
                       
                       <button 
                         onClick={() => handleDeleteArticle(art.id)}
-                        className="bg-rose-950/40 hover:bg-rose-900 text-rose-300 p-1.5 rounded-lg border border-rose-900 text-xs cursor-pointer"
+                        className="bg-rose-950/40 hover:bg-rose-900 text-rose-300 p-1.5 rounded-lg border border-rose-900 text-xs cursor-pointer transition-all"
                         title="حذف المقال"
                       >
                         🗑
